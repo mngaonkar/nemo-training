@@ -46,6 +46,7 @@ if __name__ == "__main__":
         accelerator="gpu",
         strategy=strategy,
         plugins=nl.MegatronMixedPrecision(precision="bf16-mixed"),
+        default_root_dir="/workspace/checkpoints",  ## Save to persistent volume
     )
 
     nemo_logger = nl.NeMoLogger()

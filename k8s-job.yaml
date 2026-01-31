@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nemo-training-job
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: nemo-training
+    spec:
+      restartPolicy: OnFailure
+      
+      # Volume definition
+      volumes:
+        - name: nemo-checkpoints
+          persistentVolumeClaim:
+            claimName: nemo-training-pvc
+        - name: training-code
+          configMap:
+            name: nemo-training-script
+      
+      containers:
+      - name: nemo-trainer
+        image: nvcr.io/nvidia/nemo:25.11
+        
+        # GPU resource requests
+        resources:
+          limits:
+            nvidia.com/gpu: 1  # Adjust based on your needs
+          requests:
+            nvidia.com/gpu: 1
+            memory: "32Gi"
+            cpu: "8"
+        
+        # Volume mounts
+        volumeMounts:
+          - name: nemo-checkpoints
+            mountPath: /workspace/checkpoints
+          - name: training-code
+            mountPath: /workspace/code
+        
+        # Working directory
+        workingDir: /workspace/code
+        
+        # Command to run training
+        command: ["python"]
+        args: ["simple-train-script.py"]
+        
+        # Environment variables (optional)
+        env:
+          - name: CUDA_VISIBLE_DEVICES
+            value: "0"
+          - name: NCCL_DEBUG
+            value: "INFO"
